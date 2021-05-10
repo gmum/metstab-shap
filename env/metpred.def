@@ -1,0 +1,14 @@
+Bootstrap: docker
+From: lamiane/metpred
+
+%labels
+    version v1.0
+
+%environment
+    export NEPTUNE_API_TOKEN="your Neptune token"
+    export PYTHONPATH=$PYTHONPATH:$HOME/metstab-shap
+
+%runscript
+    #!/bin/bash
+    source activate stab
+    "$@"
