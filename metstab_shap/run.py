@@ -17,7 +17,7 @@ from metstab_shap.savingutils import save_configs, save_as_json, save_prediction
 # use: python metstab_shap/run.py configs/model/svm.cfg configs/data/rat.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg saving_dir
 
 n_args = 1 + 6
-neptune.init('lamiane/sandbox')
+neptune.init()
 version_tag = "A"
 
 if __name__=='__main__':
