@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: lamiane/metpred
+From: lamiane/metpred2
 
 %labels
     version v1.0

@@ -58,4 +58,5 @@ And analyse it using:
 
 ## An example with a Docker container
 
+As an alternative Docker image can be used to run the experiments with:
 `docker run --rm -e PYTHONPATH=/app -e NEPTUNE_API_TOKEN=<TOKEN> -e NEPTUNE_PROJECT=<PROJECT> raalsky/metstab:latest conda run -n stab python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`
