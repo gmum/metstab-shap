@@ -1,6 +1,6 @@
 # How can SHAP values help to shape metabolic stability of chemical compounds?
 
-This repository accompanies article *How can SHAP values help to shape metabolic stability of chemical compounds?* by Agnieszka Pocha, Rafał Jankowski, and Sabina Podlewska.
+This repository accompanies article [How can SHAP values help to shape metabolic stability of chemical compounds?](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-021-00542-y) by Agnieszka Wojtuch, Rafał Jankowski, and Sabina Podlewska.
 
 
 ## Summary
@@ -56,7 +56,24 @@ Assuming you downloaded this repository to your `$HOME` directory, you can train
 And analyse it using:
 `singularity run --pwd $HOME/metstab-shap -B $HOME:$HOME metpred.simg python metstab_shap/calculate_shap_values.py ml-results/h-ma-c-nb shap-results/h-ma-c-nb configs/shap.cfg`.
 
-## An example with a Docker container
+### An example with a Docker container
 
 As an alternative Docker image can be used to run the experiments with:
 `docker run --rm -e PYTHONPATH=/app -e NEPTUNE_API_TOKEN=<TOKEN> -e NEPTUNE_PROJECT=<PROJECT> raalsky/metstab:latest conda run -n stab python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`
+
+## Citation
+
+If you find our results useful, you can cite this work using the following BibTeX entry:
+
+```
+@article{wojtuch2021can,
+  title={How can SHAP values help to shape metabolic stability of chemical compounds?},
+  author={Wojtuch, Agnieszka and Jankowski, Rafa{\l} and Podlewska, Sabina},
+  journal={Journal of Cheminformatics},
+  volume={13},
+  number={1},
+  pages={1--20},
+  year={2021},
+  publisher={Springer}
+}
+```
