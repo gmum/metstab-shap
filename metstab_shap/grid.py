@@ -17,15 +17,20 @@ def get_grid(task, model):
             return get_tree_classification_grid()
         elif model in ['nb', 'naive-bayes', 'naive_bayes']:
             return get_nb_classification_grid()
+        elif model == 'xgboost':
+            raise NotImplementedError
         else:
-            raise ValueError(f'For classification `model` parameter must be `svm`, `tree` or `nb`, is {model}.')
+            raise ValueError(
+                f'For classification `model` parameter must be `svm`, `tree`, `nb` or `xgboost`, is {model}.')
     elif 'regression' == task:
         if 'svm' == model:
             return get_svm_regression_grid()
         elif model in ['tree', 'trees']:
             return get_tree_regression_grid()
+        elif model == 'xgboost':
+            return get_xgboost_regression_grid()
         else:
-            raise ValueError(f'For regression `model` parameter must be `svm` or `tree`, is {model}.')
+            raise ValueError(f'For regression `model` parameter must be `svm`, `tree` or `xgboost`, is {model}.')
     else:
         raise ValueError(f'`task` parameter must be `classification` or `regression`, is {task}.')
 
@@ -133,14 +138,15 @@ def remove_regressors(config_dict, remove_trees=False, remove_svms=False, remove
 
 def get_svm_config():
     """Hyperparams for SVMs."""
-    SVM_config = namedtuple('SVM_config', ['c', 'gamma', 'coef0', 'degree', 'tol', 'epsilon', 'max_iter', 'probability'])
+    SVM_config = namedtuple('SVM_config',
+                            ['c', 'gamma', 'coef0', 'degree', 'tol', 'epsilon', 'max_iter', 'probability'])
     cfg = SVM_config(c=[0.0001, 0.001, 0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0, 25.0],
                      gamma=['auto', 'scale'] + [10 ** i for i in range(-6, 0)],
                      coef0=[-10 ** i for i in range(-6, 0)] + [0.0] + [10 ** i for i in range(-1, -7, -1)],
                      degree=list(range(1, 10)),
                      tol=[1e-05, 0.0001, 0.001, 0.01, 0.1],
                      epsilon=[0.0001, 0.001, 0.01, 0.1, 1.0],
-                     max_iter=[2000,], probability=[True,])
+                     max_iter=[2000, ], probability=[True, ])
     return cfg
 
 
@@ -151,15 +157,15 @@ def get_svm_classification_grid():
     cache_size = 100
     svc_rbf = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol,
                'kernel': ['rbf'],
-               'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size,]}
+               'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size, ]}
 
     svc_poly = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol,
                 'kernel': ['poly'], 'degree': cfg.degree, 'coef0': cfg.coef0,
-                'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size,]}
+                'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size, ]}
 
     svc_sigmoid = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol,
                    'kernel': ['sigmoid'], 'coef0': cfg.coef0,
-                   'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size,]}
+                   'max_iter': cfg.max_iter, 'probability': cfg.probability, 'cache_size': [cache_size, ]}
 
     svm_grid = deepcopy(classifier_config_dict)
     svm_grid = remove_classifiers(svm_grid, remove_svms=False, remove_nb=True, remove_trees=True, remove_other=True)
@@ -177,13 +183,14 @@ def get_svm_regression_grid():
 
     cache_size = 100
     svr_rbf = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol, 'epsilon': cfg.epsilon,
-               'kernel': ['rbf'], 'max_iter': cfg.max_iter, 'cache_size': [cache_size,]}
+               'kernel': ['rbf'], 'max_iter': cfg.max_iter, 'cache_size': [cache_size, ]}
 
     svr_poly = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol, 'epsilon': cfg.epsilon,
-                'kernel': ['poly'], 'degree': cfg.degree, 'coef0': cfg.coef0, 'max_iter': cfg.max_iter, 'cache_size': [cache_size,]}
+                'kernel': ['poly'], 'degree': cfg.degree, 'coef0': cfg.coef0, 'max_iter': cfg.max_iter,
+                'cache_size': [cache_size, ]}
 
     svr_sigmoid = {'C': cfg.c, 'gamma': cfg.gamma, 'tol': cfg.tol, 'epsilon': cfg.epsilon,
-                   'coef0': cfg.coef0, 'kernel': ['sigmoid'], 'max_iter': cfg.max_iter, 'cache_size': [cache_size,]}
+                   'coef0': cfg.coef0, 'kernel': ['sigmoid'], 'max_iter': cfg.max_iter, 'cache_size': [cache_size, ]}
 
     svm_grid = deepcopy(regressor_config_dict)
     svm_grid = remove_regressors(svm_grid, remove_svms=False, remove_trees=True, remove_other=True)
@@ -285,3 +292,69 @@ def get_nb_classification_grid():
     bayes_grid['sklearn.naive_bayes.MultinomialNB'] = {'alpha': cfg.alpha, 'fit_prior': cfg.fit_prior}
 
     return bayes_grid
+
+
+def get_xgboost_config():
+    """Hyperparams for tree models."""
+    XGBoost_config = namedtuple('XGBoost_config',
+                                ['n_estimators', 'max_depth', 'grow_policy', 'learning_rate', 'booster', 'subsample',
+                                 'reg_alpha', 'reg_lambda'])
+
+    cfg = XGBoost_config(n_estimators=[10, 50, 100, 500, 1000],
+                         max_depth=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, None],
+                         grow_policy=[0, 1],
+                         learning_rate=[0.0001, 0.001, 0.01, 0.1, 0.2, 0.3],
+                         booster=['gbtree', 'gblinear', 'dart'],
+                         subsample=[None, 0.5, 0.7, 0.9],
+                         reg_alpha=[0, 0.1, 1, 5, 10, 25, 50, 75, 100],
+                         reg_lambda=[0, 0.1, 1, 5, 10, 25, 50, 75, 100])
+    return cfg
+
+
+def get_xgboost_classification_grid():
+    """Hyperparameter space for XGBoost classifiers."""
+    raise NotImplementedError
+    cfg = get_xgboost_config()
+
+    etc = 'sklearn.ensemble.ExtraTreesClassifier'
+    dtc = 'sklearn.tree.DecisionTreeClassifier'
+    rfc = 'sklearn.ensemble.RandomForestClassifier'
+
+    tree_grid = deepcopy(classifier_config_dict)
+    tree_grid = remove_classifiers(tree_grid, remove_trees=False, remove_nb=True, remove_svms=True, remove_other=True)
+
+    tree_grid[etc]['n_estimators'] = cfg.n_estimators
+    tree_grid[etc]['max_depth'] = cfg.max_depth
+    tree_grid[etc]['max_samples'] = cfg.max_samples
+
+    tree_grid[dtc]['splitter'] = cfg.splitter
+    tree_grid[dtc]['max_depth'] = cfg.max_depth
+    tree_grid[dtc]['max_features'] = cfg.max_features
+
+    tree_grid[rfc]['n_estimators'] = cfg.n_estimators
+    tree_grid[rfc]['max_depth'] = cfg.max_depth
+    tree_grid[rfc]['bootstrap'] = cfg.bootstrap
+    tree_grid[rfc]['max_samples'] = cfg.max_samples
+
+    return tree_grid
+
+
+def get_xgboost_regression_grid():
+    """Hyperparameter space for XGBoost regressors."""
+    cfg = get_xgboost_config()
+
+    xgb = 'xgboost.sklearn.XGBRegressor'
+
+    xgboost_grid = deepcopy(regressor_config_dict)
+    xgboost_grid = remove_regressors(xgboost_grid, remove_trees=True, remove_svms=True, remove_other=True)
+
+    xgboost_grid[xgb]['n_estimators'] = cfg.n_estimators
+    xgboost_grid[xgb]['max_depth'] = cfg.max_depth
+    xgboost_grid[xgb]['grow_policy'] = cfg.grow_policy
+    xgboost_grid[xgb]['learning_rate'] = cfg.learning_rate
+    xgboost_grid[xgb]['booster'] = cfg.booster
+    xgboost_grid[xgb]['subsample'] = cfg.subsample
+    xgboost_grid[xgb]['reg_alpha'] = cfg.reg_alpha
+    xgboost_grid[xgb]['reg_lambda'] = cfg.reg_lambda
+
+    return xgboost_grid
