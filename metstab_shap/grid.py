@@ -348,6 +348,7 @@ def get_xgboost_regression_grid():
     xgboost_grid = deepcopy(regressor_config_dict)
     xgboost_grid = remove_regressors(xgboost_grid, remove_trees=True, remove_svms=True, remove_other=True)
 
+    xgboost_grid[xgb] = {}
     xgboost_grid[xgb]['n_estimators'] = cfg.n_estimators
     xgboost_grid[xgb]['max_depth'] = cfg.max_depth
     xgboost_grid[xgb]['grow_policy'] = cfg.grow_policy
