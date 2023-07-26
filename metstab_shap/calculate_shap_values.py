@@ -6,7 +6,6 @@ import warnings
 
 import shap
 import pickle
-import neptune
 import numpy as np
 
 from metstab_shap.data import load_data
@@ -15,9 +14,6 @@ from metstab_shap.utils import get_configs_and_model, find_and_load
 from metstab_shap.savingutils import save_configs, save_as_json, pickle_and_log_artifact, save_npy_and_log_artifact, LoggerWrapper
 
 # use: python metstab_shap/calculate_shap_values.py {ml results directory} {shap results directory} {shap config}
-
-neptune.init('lamiane/sandbox')
-version_tag = "A+"
 
 n_args = 1 + 3
 
@@ -46,22 +42,10 @@ if __name__=='__main__':
     link = shap_cfg[utils_section]["link"]
     save_configs([sys.argv[3], ], saving_dir)
 
-    # nexp = None  # uncomment if you don't want to use Neptune
-    # leave the code below uncommented if you want to use Neptune
-    nexp = neptune.create_experiment(name=saving_dir,
-                                     params={'n_background_samples': k, 'link': link,
-                                             'source dir': data_dir, 'out dir': saving_dir},
-                                     tags=['metstab-shap', version_tag,],
-                                     upload_source_files=os.path.join(os.path.dirname(os.path.realpath(__file__)), '*.py'))
+    nexp = None  # uncomment if you don't want to use Neptune
 
     # load other configs
     data_cfg, repr_cfg, task_cfg, model_cfg, model_pickle = get_configs_and_model(data_dir)
-    nexp.log_text('model pickle', model_pickle)
-    nexp.set_property('dataset', data_cfg[utils_section]['test'].split('/')[-2])
-    nexp.set_property('model', model_cfg[utils_section]['model'])
-    nexp.set_property('task', task_cfg[utils_section]['task'])
-    nexp.set_property('fingerprint', repr_cfg[utils_section]['fingerprint'])
-    nexp.set_property('morgan_nbits', repr_cfg[utils_section]['morgan_nbits'])
 
     # load the data
     if "krfp" not in repr_cfg[utils_section]['fingerprint']:
@@ -98,14 +82,12 @@ if __name__=='__main__':
         model = pickle.load(f)
 
     # calculating SHAP values
-    nexp.log_text('shap start', time.strftime('%Y-%m-%d %H:%M'))
     background_data = shap.kmeans(X_full, k)
     if 'classification' == task_cfg[utils_section]['task']:
         e = shap.KernelExplainer(model.predict_proba, background_data, link=link)
     else:
         e = shap.KernelExplainer(model.predict, background_data, link=link)  # regression
     sv = e.shap_values(X_full)
-    nexp.log_text('shap end', time.strftime('%Y-%m-%d %H:%M'))
 
     # saving results
     pickle_and_log_artifact(background_data, saving_dir, 'background_data', nexp)
@@ -119,4 +101,3 @@ if __name__=='__main__':
         preds = model.predict(X_full)
     save_npy_and_log_artifact(preds, saving_dir, 'predictions', allow_pickle=False, nexp=nexp)
 
-    nexp.log_text('main end', time.strftime('%Y-%m-%d %H:%M'))

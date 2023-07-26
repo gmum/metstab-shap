@@ -66,7 +66,7 @@ def get_configs_and_model(folder_path):
     data_cfg = parse_data_config([dc for dc in configs if 'rat' in dc or 'human' in dc][0])
     repr_cfg = parse_representation_config([rc for rc in configs if 'maccs' in rc or 'morgan' in rc or 'krfp' in rc][0])
     task_cfg = parse_task_config([tc for tc in configs if 'regression' in tc or 'classification' in tc][0])
-    model_cfg = parse_model_config([mc for mc in configs if 'nb.cfg' in mc or 'svm.cfg' in mc or 'trees.cfg' in mc][0])
+    model_cfg = parse_model_config([mc for mc in configs if 'nb.cfg' in mc or 'svm.cfg' in mc or 'trees.cfg' in mc or 'xgboost.cfg' in mc][0])
     model_pickle = [os.path.join(folder_path, pkl) for pkl in os.listdir(folder_path) if 'model.pickle' in pkl][0]
 
     return data_cfg, repr_cfg, task_cfg, model_cfg, model_pickle

@@ -36,19 +36,16 @@ You can use
 This model can be analysed with:
 `python metstab_shap/calculate_shap_values.py {ml results directory} {shap results directory} {shap config}`, which will calculate the SHAP values for all compounds in the dataset.
 
-Both `run.py` and `calculate_shap_values.py` need to be updated to point to your [Neptune](https://neptune.ai/) projects. Alternatively, you can comment out any lines that refer to Neptune.
 
 ### An example with your own environment
 
 You can use `environment.yml` to build a conda environment: `conda env create -f env/environment.yml`, and activate it with: `source activate stab`.
 
-Export your Neptune token with: `export NEPTUNE_API_TOKEN="your Neptune token"`.
-
 Assuming your current working directory is the main directory of this repository, you can train a model using: `python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`. And analyse it using: `python metstab_shap/calculate_shap_values.py ml-results/h-ma-c-nb shap-results/h-ma-c-nb configs/shap.cfg`.
 
 ### An example with a Singularity container
 
-First, you need to update the provided Singularity recipe with your Neptune token and set the `PYTHONPATH` to point to the main directory of this repository. Now, you can build a Singularity container with: `sudo singularity build metpred.simg env/metpred.def`.
+In the provided Singularity recipe, set the `PYTHONPATH` to point to the main directory of this repository. Now, you can build a Singularity container with: `sudo singularity build metpred.simg env/metpred.def`.
 
 Assuming you downloaded this repository to your `$HOME` directory, you can train a model using:
 `singularity run --pwd $HOME/metstab-shap -B $HOME:$HOME metpred.simg python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`.
@@ -59,7 +56,7 @@ And analyse it using:
 ### An example with a Docker container
 
 As an alternative Docker image can be used to run the experiments with:
-`docker run --rm -e PYTHONPATH=/app -e NEPTUNE_API_TOKEN=<TOKEN> -e NEPTUNE_PROJECT=<PROJECT> raalsky/metstab:latest conda run -n stab python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`
+`docker run --rm -e PYTHONPATH=/app  raalsky/metstab:latest conda run -n stab python metstab_shap/run.py configs/model/nb.cfg configs/data/human.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg ml-results/h-ma-c-nb`
 
 ## Citation
 

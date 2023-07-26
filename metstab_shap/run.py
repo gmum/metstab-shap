@@ -3,7 +3,6 @@ import sys
 import time
 import signal
 import logging
-import neptune
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
@@ -17,7 +16,6 @@ from metstab_shap.savingutils import save_configs, save_as_json, save_prediction
 # use: python metstab_shap/run.py configs/model/svm.cfg configs/data/rat.cfg configs/repr/maccs.cfg configs/task/classification.cfg configs/tpot-mini.cfg saving_dir
 
 n_args = 1 + 6
-neptune.init()
 version_tag = "A"
 
 if __name__=='__main__':
@@ -45,28 +43,9 @@ if __name__=='__main__':
     tpot_cfg = parse_tpot_config(sys.argv[5])
     save_configs(sys.argv[1:-1], saving_dir)
 
-    # # Nicely handling interruptions from neptune UI
-    def neptune_aborter():
-        # closes TPOT from UI, the best found pipeline will be saved
-        logging.getLogger('').info("neptune_aborter: sending Ctrl + C.")
-        os.kill(os.getpid(), signal.SIGINT)
-
     # nexp = None  # uncomment if you don't want to use Neptune
     # leave the code below uncommented if you want to use Neptune
-    nexp = neptune.create_experiment(name=saving_dir,
-                                     params={'dataset': os.path.splitext(os.path.basename(sys.argv[2]))[0],
-                                             'model': model_cfg[utils_section]['model'],
-                                             'fingerprint': repr_cfg[utils_section]['fingerprint'],
-                                             'morgan_nbits': repr_cfg[utils_section]['morgan_nbits'],
-                                             'task': task_cfg[utils_section]['task'],
-                                             'minimal_number_of_models': tpot_cfg[utils_section]['minimal_number_of_models'],
-                                             'model_cfg': model_cfg, 'data_cfg':data_cfg,
-                                             'repr_cfg': repr_cfg, 'task_cfg': task_cfg,
-                                             'tpot_cfg': tpot_cfg,
-                                            },
-                                     tags=['metstabpred',] + sys.argv[1:-1] + [version_tag,],
-                                     upload_source_files=os.path.join(os.path.dirname(os.path.realpath(__file__)), '*.py'),
-                                    abort_callback=neptune_aborter)
+    nexp = None
 
     # load data (and change to classification if needed)
     x, y, cv_split, test_x, test_y, smiles, test_smiles = load_data(data_cfg, **repr_cfg[utils_section])
@@ -107,20 +86,16 @@ if __name__=='__main__':
         'periodic_checkpoint_folder': os.path.join(saving_dir, "./tpot_checkpoints")
          }
 
-    # if `cv` not in... - we don't send the cv split.
-    _ = [nexp.set_property(k, v) for k,v in tpot_model_kwargs.items() if 'cv' not in k]
-
     # run experiment
-    nexp.log_text('starting time', time.strftime('%Y-%m-%d-%H-%M'))
+    print('starting time', time.strftime('%Y-%m-%d-%H-%M'))
     TPOTModel = task_cfg[utils_section]['tpot_model']
     model = TPOTModel(config_dict=grid_space, **tpot_model_kwargs)
     _ = model.fit(x, y)
     timestamp = time.strftime('%Y-%m-%d-%H-%M')
-    nexp.log_text('end time', timestamp)
+    print('end time', timestamp)
 
     # SAVING RESULTS
     model.export(os.path.join(saving_dir, f'{timestamp}-best_model_script.py'))
-    nexp.log_artifact(os.path.join(saving_dir, f'{timestamp}-best_model_script.py'))
     save_as_json(model.evaluated_individuals_, saving_dir, 'evaluated_individuals.json', nexp=nexp)
 
     # save the model itself
@@ -163,4 +138,3 @@ if __name__=='__main__':
 
     logger_wrapper.logger.info(all_scores)
     save_as_json(all_scores, saving_dir, 'best_model_scores.json', nexp=nexp)
-    _ = [nexp.log_metric(k,v) for k,v in all_scores.items() if isinstance(v, float)]
